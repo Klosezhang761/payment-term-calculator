@@ -1,0 +1,910 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>综合账期优化计算器</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #1a2a6c, #2c3e50, #1a2a6c);
+            color: #333;
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .container {
+            width: 100%;
+            max-width: 1400px;
+            background: rgba(255, 255, 255, 0.97);
+            border-radius: 20px;
+            box-shadow: 0 15px 50px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+        
+        header {
+            background: linear-gradient(to right, #1a2a6c, #2a3f8f);
+            color: white;
+            padding: 25px 40px;
+            text-align: center;
+            position: relative;
+        }
+        
+        header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+        }
+        
+        .scenario-badge {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: #ff9800;
+            color: #fff;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 1rem;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.2);
+        }
+        
+        header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+            max-width: 700px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+        
+        .tabs {
+            display: flex;
+            background: #f1f5f9;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        .tab {
+            flex: 1;
+            text-align: center;
+            padding: 15px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .tab.active {
+            background: white;
+            border-bottom: 3px solid #2a3f8f;
+            color: #2a3f8f;
+        }
+        
+        .tab-content {
+            display: none;
+            padding: 30px;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .calculator-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 30px;
+        }
+        
+        .input-section {
+            flex: 1;
+            min-width: 350px;
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+        }
+        
+        .result-section {
+            flex: 1.5;
+            min-width: 500px;
+            display: flex;
+            flex-direction: column;
+            gap: 25px;
+        }
+        
+        .input-group {
+            margin-bottom: 25px;
+        }
+        
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #2a3f8f;
+            font-size: 1rem;
+        }
+        
+        .input-group input, .input-group select {
+            width: 100%;
+            padding: 14px;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            transition: all 0.3s;
+        }
+        
+        .input-group input:focus, .input-group select:focus {
+            border-color: #2a3f8f;
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(42, 63, 143, 0.2);
+        }
+        
+        .input-group .input-icon {
+            position: relative;
+        }
+        
+        .input-group .input-icon i {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #2a3f8f;
+        }
+        
+        .input-group .input-icon input {
+            padding-left: 45px;
+        }
+        
+        .input-group .info-text {
+            font-size: 0.9rem;
+            color: #666;
+            margin-top: 8px;
+            font-style: italic;
+        }
+        
+        button {
+            background: linear-gradient(to right, #1a2a6c, #2a3f8f);
+            color: white;
+            border: none;
+            padding: 16px 30px;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        button:hover {
+            background: linear-gradient(to right, #2a3f8f, #3d56b3);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .result-card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+            border-left: 5px solid #2a3f8f;
+        }
+        
+        .result-card h3 {
+            color: #2a3f8f;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .result-value {
+            font-size: 2.2rem;
+            font-weight: 700;
+            color: #1a2a6c;
+            text-align: center;
+            margin: 15px 0;
+        }
+        
+        .result-subvalue {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #2a3f8f;
+            text-align: center;
+            margin: 10px 0;
+        }
+        
+        .result-desc {
+            font-size: 1rem;
+            color: #555;
+            line-height: 1.6;
+            margin-top: 15px;
+            padding: 15px;
+            background: #f9f9ff;
+            border-radius: 10px;
+        }
+        
+        .chart-container {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+        }
+        
+        .chart-container h3 {
+            color: #2a3f8f;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .savings-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+            font-size: 0.9rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        
+        .savings-table th, .savings-table td {
+            padding: 12px 15px;
+            text-align: center;
+            border: 1px solid #e0e7ff;
+        }
+        
+        .savings-table th {
+            background-color: #2a3f8f;
+            color: white;
+            font-weight: 600;
+        }
+        
+        .savings-table tr:nth-child(even) {
+            background-color: #f8f9ff;
+        }
+        
+        .savings-table tr:hover {
+            background-color: #eef2ff;
+        }
+        
+        .explanation {
+            background: #eef2ff;
+            border-radius: 15px;
+            padding: 25px;
+            margin-top: 25px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+        }
+        
+        .explanation h3 {
+            color: #2a3f8f;
+            margin-bottom: 15px;
+            border-bottom: 2px solid #d6e4ff;
+            padding-bottom: 10px;
+        }
+        
+        .explanation-content {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .model {
+            flex: 1;
+            min-width: 300px;
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.05);
+        }
+        
+        .model h4 {
+            color: #2a3f8f;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .explanation ul {
+            padding-left: 25px;
+            margin-top: 15px;
+        }
+        
+        .explanation li {
+            margin-bottom: 12px;
+            line-height: 1.5;
+        }
+        
+        .highlight {
+            background: linear-gradient(to right, #ffeb3b, #ffc107);
+            padding: 3px 8px;
+            border-radius: 5px;
+            font-weight: 600;
+        }
+        
+        .formula {
+            background: #f0f7ff;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            font-family: monospace;
+            font-size: 1.1rem;
+            border-left: 4px solid #2a3f8f;
+        }
+        
+        .money {
+            font-weight: 600;
+            background: #e8f5e9;
+            padding: 2px 6px;
+            border-radius: 4px;
+            display: inline-block;
+        }
+        
+        .footer {
+            text-align: center;
+            padding: 20px;
+            background: #f1f5f9;
+            color: #666;
+            font-size: 0.9rem;
+            border-top: 1px solid #ddd;
+        }
+        
+        .footer a {
+            color: #2a3f8f;
+            text-decoration: none;
+        }
+        
+        .footer a:hover {
+            text-decoration: underline;
+        }
+        
+        @media (max-width: 1100px) {
+            .calculator-container {
+                flex-direction: column;
+            }
+            
+            header h1 {
+                font-size: 2rem;
+            }
+            
+            .result-value {
+                font-size: 1.8rem;
+            }
+            
+            .savings-table {
+                font-size: 0.8rem;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .tabs {
+                flex-direction: column;
+            }
+            
+            .explanation-content {
+                flex-direction: column;
+            }
+            
+            header {
+                padding: 20px 15px;
+            }
+            
+            .tab-content {
+                padding: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1><i class="fas fa-calculator"></i> 综合账期优化计算器</h1>
+            <div class="scenario-badge" id="scenario-indicator">账期延长分析</div>
+            <p>精确计算账期调整的资金成本节约和等效折扣率 - 采购决策专业工具</p>
+        </header>
+        
+        <div class="tabs">
+            <div class="tab active" data-tab="extend">账期延长分析</div>
+            <div class="tab" data-tab="shorten">账期缩短分析</div>
+        </div>
+        
+        <div class="tab-content active" id="extend-content">
+            <div class="calculator-container">
+                <div class="input-section">
+                    <h3 style="color: #2a3f8f; margin-bottom: 20px;"><i class="fas fa-edit"></i> 输入参数</h3>
+                    
+                    <div class="input-group">
+                        <label for="current-terms-extend">当前应付账期（天）</label>
+                        <div class="input-icon">
+                            <i class="fas fa-calendar-alt"></i>
+                            <input type="number" id="current-terms-extend" value="30" min="0">
+                        </div>
+                        <div class="info-text">供应商要求的当前付款期限</div>
+                    </div>
+                    
+                    <div class="input-group">
+                        <label for="target-terms-extend">目标应付账期（天）</label>
+                        <div class="input-icon">
+                            <i class="fas fa-calendar-check"></i>
+                            <input type="number" id="target-terms-extend" value="60" min="0">
+                        </div>
+                        <div class="info-text">您希望协商的延长付款期限</div>
+                    </div>
+                    
+                    <div class="input-group">
+                        <label for="ap-amount-extend">应付账款总金额（元）</label>
+                        <div class="input-icon">
+                            <i class="fas fa-money-bill-wave"></i>
+                            <input type="number" id="ap-amount-extend" value="100000" min="0" step="1000">
+                        </div>
+                        <div class="info-text">需要支付的账款总金额</div>
+                    </div>
+                    
+                    <div class="input-group">
+                        <label for="annual-yield-extend">年化收益率（%）</label>
+                        <div class="input-icon">
+                            <i class="fas fa-chart-line"></i>
+                            <input type="number" id="annual-yield-extend" value="2.84" min="0" step="0.01">
+                        </div>
+                        <div class="info-text">您的资金成本或投资机会成本</div>
+                    </div>
+                    
+                    <div class="input-group">
+                        <div class="info-text" style="background: #e8f4ff; padding: 10px; border-radius: 8px;">
+                            <i class="fas fa-info-circle"></i> <strong>计算基准：</strong> 使用360天作为年度天数基准
+                        </div>
+                    </div>
+                    
+                    <button id="calculate-btn-extend">
+                        <i class="fas fa-calculator"></i> 计算账期延长收益
+                    </button>
+                </div>
+                
+                <div class="result-section">
+                    <div class="result-card">
+                        <h3><i class="fas fa-coins"></i> 资金成本节约</h3>
+                        <div class="result-value" id="savings-amount-extend">¥2,366.67</div>
+                        <div class="result-subvalue" id="savings-per-day-extend">¥78.89/天</div>
+                        <p class="result-desc">将账期从<span id="current-terms-extend-desc">30</span>天延长至<span id="target-terms-extend-desc">60</span>天后，您的资金成本节约总额为<span class="money" id="savings-amount-extend-desc">2,366.67元</span>。这相当于每天<span class="money" id="savings-per-day-extend-desc">78.89元</span>的资金成本节约，可用于再投资或降低融资成本。</p>
+                    </div>
+                    
+                    <div class="result-card">
+                        <h3><i class="fas fa-percentage"></i> 等效折扣率</h3>
+                        <div class="result-value" id="discount-rate-extend">2.3667%</div>
+                        <p class="result-desc">如果供应商不同意延长账期至<span id="target-terms-extend-desc2">60</span>天，您应要求至少<span class="highlight" id="discount-rate-extend-desc">2.3667%</span>的折扣（在<span id="current-terms-extend-desc2">30</span>天付款条件下）以保持同等经济价值。此折扣率基于360天基准计算。</p>
+                    </div>
+                    
+                    <div class="chart-container">
+                        <h3><i class="fas fa-chart-bar"></i> 账期延长收益分析</h3>
+                        <canvas id="results-chart-extend"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="tab-content" id="shorten-content">
+            <div class="calculator-container">
+                <div class="input-section">
+                    <h3 style="color: #2a3f8f; margin-bottom: 20px;"><i class="fas fa-edit"></i> 输入参数</h3>
+                    
+                    <div class="input-group">
+                        <label for="current-terms-shorten">当前应付账期（天）</label>
+                        <div class="input-icon">
+                            <i class="fas fa-calendar-alt"></i>
+                            <input type="number" id="current-terms-shorten" value="60" min="0">
+                        </div>
+                        <div class="info-text">供应商要求的当前付款期限</div>
+                    </div>
+                    
+                    <div class="input-group">
+                        <label for="target-terms-shorten">目标应付账期（天）</label>
+                        <div class="input-icon">
+                            <i class="fas fa-calendar-check"></i>
+                            <input type="number" id="target-terms-shorten" value="30" min="0">
+                        </div>
+                        <div class="info-text">您希望协商的缩短付款期限</div>
+                    </div>
+                    
+                    <div class="input-group">
+                        <label for="ap-amount-shorten">应付账款总金额（元）</label>
+                        <div class="input-icon">
+                            <i class="fas fa-money-bill-wave"></i>
+                            <input type="number" id="ap-amount-shorten" value="1200" min="0" step="1000">
+                        </div>
+                        <div class="info-text">需要支付的账款总金额（12个月）</div>
+                    </div>
+                    
+                    <div class="input-group">
+                        <label for="annual-yield-shorten">年化收益率（%）</label>
+                        <div class="input-icon">
+                            <i class="fas fa-chart-line"></i>
+                            <input type="number" id="annual-yield-shorten" value="2.84" min="0" step="0.01">
+                        </div>
+                        <div class="info-text">您的资金成本或投资机会成本</div>
+                    </div>
+                    
+                    <div class="input-group">
+                        <label for="months-shorten">计算周期（月）</label>
+                        <div class="input-icon">
+                            <i class="fas fa-calendar"></i>
+                            <input type="number" id="months-shorten" value="12" min="1" max="24">
+                        </div>
+                        <div class="info-text">分析的时间范围（通常为12个月）</div>
+                    </div>
+                    
+                    <button id="calculate-btn-shorten">
+                        <i class="fas fa-calculator"></i> 计算账期缩短补偿
+                    </button>
+                </div>
+                
+                <div class="result-section">
+                    <div class="result-card">
+                        <h3><i class="fas fa-coins"></i> 资金成本损失</h3>
+                        <div class="result-value" id="loss-amount-shorten">¥42.16</div>
+                        <div class="result-subvalue" id="loss-per-month-shorten">¥3.51/月</div>
+                        <p class="result-desc">将账期从<span id="current-terms-shorten-desc">60</span>天缩短至<span id="target-terms-shorten-desc">30</span>天后，<span id="months-shorten-desc">12</span>个月内您的资金成本损失总额为<span class="money" id="loss-amount-shorten-desc">42.16元</span>，相当于每月损失<span class="money" id="loss-per-month-shorten-desc">3.51元</span>的机会成本。</p>
+                    </div>
+                    
+                    <div class="result-card">
+                        <h3><i class="fas fa-percentage"></i> 等效折扣率</h3>
+                        <div class="result-value" id="discount-rate-shorten">3.51%</div>
+                        <p class="result-desc">如果供应商不同意维持<span id="current-terms-shorten-desc2">60</span>天账期，您应要求至少<span class="highlight" id="discount-rate-shorten-desc">3.51%</span>的折扣（在<span id="target-terms-shorten-desc2">30</span>天付款条件下）以补偿资金时间价值的损失。</p>
+                    </div>
+                    
+                    <div class="result-card">
+                        <h3><i class="fas fa-table"></i> 月度补偿分析</h3>
+                        <div class="result-desc">每月折扣金额再投资产生的收益（按年化<span id="annual-yield-shorten-desc">2.84%</span>计算）：</div>
+                        <table class="savings-table">
+                            <thead>
+                                <tr>
+                                    <th>月份</th>
+                                    <th>每月折扣</th>
+                                    <th>投资月数</th>
+                                    <th>期末价值</th>
+                                </tr>
+                            </thead>
+                            <tbody id="savings-details-shorten">
+                                <!-- 表格内容将通过JS动态生成 -->
+                            </tbody>
+                            <tfoot>
+                                <tr>
+                                    <th>总计</th>
+                                    <th id="total-saving-shorten">¥42.16</th>
+                                    <th>-</th>
+                                    <th id="total-future-value-shorten">¥42.16</th>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="explanation">
+            <h3><i class="fas fa-lightbulb"></i> 使用指南</h3>
+            
+            <div class="explanation-content">
+                <div class="model">
+                    <h4><i class="fas fa-arrow-up"></i> 账期延长分析</h4>
+                    <p>当您希望延长供应商付款期限时使用此模式：</p>
+                    <ul>
+                        <li>输入当前账期和目标账期（天数）</li>
+                        <li>输入应付账款总金额</li>
+                        <li>输入您的年化收益率</li>
+                        <li>系统计算资金成本节约和等效折扣率</li>
+                    </ul>
+                </div>
+                
+                <div class="model">
+                    <h4><i class="fas fa-arrow-down"></i> 账期缩短分析</h4>
+                    <p>当您需要缩短账期并要求补偿时使用此模式：</p>
+                    <ul>
+                        <li>输入当前账期和目标账期（天数）</li>
+                        <li>输入应付账款总金额</li>
+                        <li>输入年化收益率和计算周期</li>
+                        <li>系统计算资金成本损失和等效折扣率</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div style="margin-top: 25px; background: white; padding: 20px; border-radius: 10px;">
+                <h4><i class="fas fa-cogs"></i> 计算逻辑说明</h4>
+                <p><strong>账期延长模型：</strong> 资金成本节约 = 应付账款 × (年化收益率 ÷ 360) × 延长天数</p>
+                <p><strong>账期缩短模型：</strong> 使用精确现金流模型计算每月折扣再投资收益，确保财务准确性</p>
+                <p>所有金额均使用千分位格式化，折扣率保留4位小数</p>
+            </div>
+        </div>
+        
+        <div class="footer">
+            <p>© 2023 综合账期优化计算器 | 专业采购决策工具 | 数据实时计算，结果仅供参考</p>
+            <p>将此页面保存为HTML文件后可在浏览器中直接使用 | 无需网络连接</p>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // 金额格式化函数
+            function formatMoney(amount) {
+                return '¥' + amount.toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,');
+            }
+            
+            // 数字格式化（不带货币符号）
+            function formatNumber(num) {
+                return num.toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,');
+            }
+            
+            // 标签切换功能
+            const tabs = document.querySelectorAll('.tab');
+            tabs.forEach(tab => {
+                tab.addEventListener('click', function() {
+                    const tabName = this.getAttribute('data-tab');
+                    
+                    // 更新标签状态
+                    tabs.forEach(t => t.classList.remove('active'));
+                    this.classList.add('active');
+                    
+                    // 更新内容显示
+                    document.querySelectorAll('.tab-content').forEach(content => {
+                        content.classList.remove('active');
+                    });
+                    document.getElementById(`${tabName}-content`).classList.add('active');
+                    
+                    // 更新顶部指示器
+                    const indicator = document.getElementById('scenario-indicator');
+                    indicator.textContent = tabName === 'extend' ? '账期延长分析' : '账期缩短分析';
+                    
+                    // 重新计算当前模型
+                    if(tabName === 'extend') {
+                        calculateExtendResults();
+                    } else {
+                        calculateShortenResults();
+                    }
+                });
+            });
+            
+            // 账期延长模型计算
+            function calculateExtendResults() {
+                // 获取输入值
+                const currentTerms = parseFloat(document.getElementById('current-terms-extend').value);
+                const targetTerms = parseFloat(document.getElementById('target-terms-extend').value);
+                const apAmount = parseFloat(document.getElementById('ap-amount-extend').value);
+                const annualYield = parseFloat(document.getElementById('annual-yield-extend').value) / 100;
+                
+                // 更新账期描述
+                document.getElementById('current-terms-extend-desc').textContent = currentTerms;
+                document.getElementById('target-terms-extend-desc').textContent = targetTerms;
+                document.getElementById('current-terms-extend-desc2').textContent = currentTerms;
+                document.getElementById('target-terms-extend-desc2').textContent = targetTerms;
+                
+                // 计算延长天数
+                const extendedDays = targetTerms - currentTerms;
+                
+                // 计算每日收益率因子
+                const dailyYieldFactor = annualYield / 360;
+                
+                // 计算资金成本节约金额
+                const savingsAmount = apAmount * dailyYieldFactor * extendedDays;
+                
+                // 计算等效折扣率
+                const discountRate = (savingsAmount / apAmount) * 100;
+                
+                // 计算每日资金节约
+                const dailySavings = savingsAmount / extendedDays;
+                
+                // 更新结果
+                document.getElementById('savings-amount-extend').textContent = formatMoney(savingsAmount);
+                document.getElementById('savings-per-day-extend').textContent = formatMoney(dailySavings) + '/天';
+                document.getElementById('discount-rate-extend').textContent = discountRate.toFixed(4) + '%';
+                
+                // 更新结果描述
+                document.getElementById('savings-amount-extend-desc').textContent = formatNumber(savingsAmount) + '元';
+                document.getElementById('savings-per-day-extend-desc').textContent = formatNumber(dailySavings) + '元';
+                document.getElementById('discount-rate-extend-desc').textContent = discountRate.toFixed(4) + '%';
+                
+                // 更新图表
+                updateExtendChart(apAmount, savingsAmount, discountRate, dailySavings);
+            }
+            
+            // 账期缩短模型计算
+            function calculateShortenResults() {
+                // 获取输入值
+                const currentTerms = parseFloat(document.getElementById('current-terms-shorten').value);
+                const targetTerms = parseFloat(document.getElementById('target-terms-shorten').value);
+                const apAmount = parseFloat(document.getElementById('ap-amount-shorten').value);
+                const annualYield = parseFloat(document.getElementById('annual-yield-shorten').value) / 100;
+                const months = parseInt(document.getElementById('months-shorten').value);
+                
+                // 更新账期描述
+                document.getElementById('current-terms-shorten-desc').textContent = currentTerms;
+                document.getElementById('target-terms-shorten-desc').textContent = targetTerms;
+                document.getElementById('current-terms-shorten-desc2').textContent = currentTerms;
+                document.getElementById('target-terms-shorten-desc2').textContent = targetTerms;
+                document.getElementById('months-shorten-desc').textContent = months;
+                
+                // 计算月收益率
+                const monthlyRate = annualYield / 12;
+                
+                // 计算缩短天数
+                const reducedDays = currentTerms - targetTerms;
+                
+                // 计算月付金额（总金额分摊到各月）
+                const monthlyAmount = apAmount / months;
+                
+                // 计算目标值（总机会成本）
+                const targetValue = monthlyAmount * (annualYield / 360) * reducedDays * months;
+                
+                // 使用更精确的算法计算等效折扣率
+                let discountRate = 0;
+                let low = 0;
+                let high = 0.5; // 50%最大折扣率
+                let tolerance = 0.0001; // 更高精度
+                
+                for(let i = 0; i < 100; i++) {
+                    discountRate = (low + high) / 2;
+                    const monthlyDiscount = monthlyAmount * discountRate;
+                    let futureValueSum = 0;
+                    
+                    // 计算每个月的节省在期末的价值
+                    for(let m = 0; m < months; m++) {
+                        const investmentMonths = months - m;
+                        futureValueSum += monthlyDiscount * Math.pow(1 + monthlyRate, investmentMonths);
+                    }
+                    
+                    if(Math.abs(futureValueSum - targetValue) < tolerance) {
+                        break;
+                    } else if(futureValueSum < targetValue) {
+                        low = discountRate;
+                    } else {
+                        high = discountRate;
+                    }
+                }
+                
+                // 计算年度折扣率（统一基准）
+                const annualDiscountRate = discountRate * 12 * 100;
+                
+                // 计算月度节省详情
+                const monthlyDiscount = monthlyAmount * discountRate;
+                let savingsDetailsHTML = '';
+                let totalDiscount = 0;
+                let totalFV = 0;
+                
+                for(let m = 0; m < months; m++) {
+                    const investmentMonths = months - m;
+                    const futureValue = monthlyDiscount * Math.pow(1 + monthlyRate, investmentMonths);
+                    
+                    savingsDetailsHTML += `
+                        <tr>
+                            <td>${m+1}</td>
+                            <td>${formatMoney(monthlyDiscount)}</td>
+                            <td>${investmentMonths}</td>
+                            <td>${formatMoney(futureValue)}</td>
+                        </tr>
+                    `;
+                    
+                    totalDiscount += monthlyDiscount;
+                    totalFV += futureValue;
+                }
+                
+                // 更新结果（统一使用年度折扣率）
+                document.getElementById('loss-amount-shorten').textContent = formatMoney(totalFV);
+                document.getElementById('loss-per-month-shorten').textContent = formatMoney(monthlyDiscount) + '/月';
+                document.getElementById('discount-rate-shorten').textContent = annualDiscountRate.toFixed(4) + '%';
+                document.getElementById('savings-details-shorten').innerHTML = savingsDetailsHTML;
+                document.getElementById('total-saving-shorten').textContent = formatMoney(totalDiscount);
+                document.getElementById('total-future-value-shorten').textContent = formatMoney(totalFV);
+                
+                // 更新结果描述（确保折扣率一致）
+                document.getElementById('loss-amount-shorten-desc').textContent = formatNumber(totalFV) + '元';
+                document.getElementById('loss-per-month-shorten-desc').textContent = formatNumber(monthlyDiscount) + '元';
+                document.getElementById('discount-rate-shorten-desc').textContent = annualDiscountRate.toFixed(4) + '%';
+                document.getElementById('annual-yield-shorten-desc').textContent = (annualYield * 100).toFixed(2) + '%';
+            }
+            
+            // 更新延长模型图表
+            function updateExtendChart(apAmount, savingsAmount, discountRate, dailySavings) {
+                const ctx = document.getElementById('results-chart-extend').getContext('2d');
+                
+                // 销毁旧图表实例（如果存在）
+                if(window.extendChart) {
+                    window.extendChart.destroy();
+                }
+                
+                window.extendChart = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: ['资金成本节约', '等效折扣率', '每日资金节约'],
+                        datasets: [{
+                            label: '数值',
+                            data: [savingsAmount, discountRate, dailySavings],
+                            backgroundColor: [
+                                'rgba(42, 63, 143, 0.7)',
+                                'rgba(26, 42, 108, 0.7)',
+                                'rgba(42, 143, 63, 0.7)'
+                            ],
+                            borderColor: [
+                                'rgba(42, 63, 143, 1)',
+                                'rgba(26, 42, 108, 1)',
+                                'rgba(42, 143, 63, 1)'
+                            ],
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                title: {
+                                    display: true,
+                                    text: '数值'
+                                }
+                            }
+                        },
+                        plugins: {
+                            legend: {
+                                display: false
+                            },
+                            title: {
+                                display: true,
+                                text: '账期延长收益分析'
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        let label = context.dataset.label || '';
+                                        if (label) {
+                                            label += ': ';
+                                        }
+                                        if (context.dataIndex === 0) {
+                                            label += formatMoney(context.parsed.y);
+                                        } else if (context.dataIndex === 1) {
+                                            label += context.parsed.y.toFixed(4) + '%';
+                                        } else {
+                                            label += formatMoney(context.parsed.y) + '/天';
+                                        }
+                                        return label;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+            
+            // 初始计算
+            calculateExtendResults();
+            
+            // 添加事件监听器
+            document.getElementById('calculate-btn-extend').addEventListener('click', calculateExtendResults);
+            document.getElementById('calculate-btn-shorten').addEventListener('click', calculateShortenResults);
+            
+            // 添加输入字段的实时计算
+            document.querySelectorAll('#extend-content input').forEach(input => {
+                input.addEventListener('input', calculateExtendResults);
+            });
+            
+            document.querySelectorAll('#shorten-content input').forEach(input => {
+                input.addEventListener('input', calculateShortenResults);
+            });
+        });
+    </script>
+</body>
+</html>
